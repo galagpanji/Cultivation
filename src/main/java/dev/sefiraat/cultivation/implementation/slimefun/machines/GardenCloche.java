@@ -4,10 +4,6 @@ import dev.sefiraat.cultivation.Cultivation;
 import dev.sefiraat.cultivation.api.datatypes.instances.FloraLevelProfile;
 import dev.sefiraat.cultivation.api.slimefun.items.plants.HarvestablePlant;
 import dev.sefiraat.cultivation.implementation.slimefun.items.Machines;
-import dev.sefiraat.cultivation.implementation.utils.DisplayGroupGenerators;
-import dev.sefiraat.sefilib.entity.display.DisplayGroup;
-import dev.sefiraat.sefilib.entity.display.DisplayInteractable;
-import dev.sefiraat.sefilib.string.Theme;
 import io.github.bakedlibs.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -25,7 +21,7 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
-import org.bukkit.Bukkit;
+import dev.sefiraat.sefilib.string.Theme;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -36,16 +32,12 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class GardenCloche extends SlimefunItem implements DisplayInteractable, EnergyNetComponent {
+public class GardenCloche extends SlimefunItem implements EnergyNetComponent {
 
-    private static final String KEY_PLANT = "plant";
-    private static final String KEY_UUID = "display-uuid";
     private static final int PLANT_SLOT = 20;
     private static final int[] OUTPUT_SLOTS = new int[]{
         14, 15, 16, 23, 24, 25, 32, 33, 34
@@ -69,7 +61,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
                 @Override
                 public void onPlayerPlace(@NotNull BlockPlaceEvent e) {
                     e.getBlock().setType(Material.GLASS_PANE);
-                    setupDisplay(e.getBlock().getLocation());
                 }
             },
             new BlockBreakHandler(false, false) {
@@ -77,7 +68,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
                 @ParametersAreNonnullByDefault
                 public void onPlayerBreak(BlockBreakEvent e, ItemStack item, List<ItemStack> drops) {
                     Location location = e.getBlock().getLocation();
-                    removeDisplay(location);
                     e.getBlock().setType(Material.AIR);
                     BlockMenu blockMenu = BlockStorage.getInventory(location);
                     if (blockMenu != null) {
@@ -99,11 +89,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
                     SlimefunItem slimefunItem = SlimefunItem.getByItem(possiblePlant);
                     Location location = block.getLocation();
                     if (slimefunItem instanceof HarvestablePlant plant) {
-                        if (!hasDisplayPlant(location)) {
-                            Bukkit.getScheduler().runTask(
-                                Cultivation.getInstance(), () -> addPlantToDisplay(location)
-                            );
-                        }
                         if (getCharge(location) < POWER_REQUIREMENT) {
                             return;
                         }
@@ -115,11 +100,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
                             blockMenu.pushItem(itemStack, OUTPUT_SLOTS);
                             removeCharge(location, POWER_REQUIREMENT);
                         }
-                    } else {
-                        Bukkit.getScheduler().runTask(
-                            Cultivation.getInstance(),
-                            () -> removePlantFromDisplay(location)
-                        );
                     }
                 }
             }
@@ -156,25 +136,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
             }
         };
     }
-
-    @Nullable
-    private UUID getDisplayGroupUUID(@Nonnull Location location) {
-        String uuid = BlockStorage.getLocationInfo(location, KEY_UUID);
-        if (uuid == null) {
-            return null;
-        }
-        return UUID.fromString(uuid);
-    }
-
-    @Nullable
-    private DisplayGroup getDisplayGroup(@Nonnull Location location) {
-        UUID uuid = getDisplayGroupUUID(location);
-        if (uuid == null) {
-            return null;
-        }
-        return DisplayGroup.fromUUID(uuid);
-    }
-
 
     @NotNull
     @Override
