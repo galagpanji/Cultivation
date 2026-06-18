@@ -68,7 +68,7 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
             new BlockPlaceHandler(false) {
                 @Override
                 public void onPlayerPlace(@NotNull BlockPlaceEvent e) {
-                    e.getBlock().setType(Material.BARRIER);
+                    e.getBlock().setType(Material.GLASS_PANE);
                     setupDisplay(e.getBlock().getLocation());
                 }
             },
