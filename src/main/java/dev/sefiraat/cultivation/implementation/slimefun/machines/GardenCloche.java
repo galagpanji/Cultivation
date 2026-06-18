@@ -157,39 +157,6 @@ public class GardenCloche extends SlimefunItem implements DisplayInteractable, E
         };
     }
 
-    private boolean hasDisplayPlant(@Nonnull Location location) {
-        String hasPlant = BlockStorage.getLocationInfo(location, KEY_PLANT);
-        return Boolean.parseBoolean(hasPlant);
-    }
-
-    private void setupDisplay(@Nonnull Location location) {
-        DisplayGroup displayGroup = DisplayGroupGenerators.generateCloche(location.clone().add(0.5, 0, 0.5));
-        BlockStorage.addBlockInfo(location, KEY_UUID, displayGroup.getParentUUID().toString());
-    }
-
-    private void removeDisplay(@Nonnull Location location) {
-        DisplayGroup group = getDisplayGroup(location);
-        if (group != null) {
-            group.remove();
-        }
-    }
-
-    private void addPlantToDisplay(@Nonnull Location location) {
-        BlockStorage.addBlockInfo(location, KEY_PLANT, "true");
-        DisplayGroup group = getDisplayGroup(location);
-        if (group != null) {
-            DisplayGroupGenerators.addPlantToCloche(group);
-        }
-    }
-
-    private void removePlantFromDisplay(@Nonnull Location location) {
-        DisplayGroup displayGroup = getDisplayGroup(location);
-        if (displayGroup != null) {
-            DisplayGroupGenerators.removePlantFromCloche(displayGroup);
-            BlockStorage.addBlockInfo(location, KEY_PLANT, null);
-        }
-    }
-
     @Nullable
     private UUID getDisplayGroupUUID(@Nonnull Location location) {
         String uuid = BlockStorage.getLocationInfo(location, KEY_UUID);
