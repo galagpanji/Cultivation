@@ -1,0 +1,60 @@
+name: Nightly Auto-Fix
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 3 AM UTC daily — change to taste
+  workflow_dispatch: {}    # lets you trigger it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- EDIT THIS BLOCK for your stack (Java/Maven shown) ---
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: mvn -B clean test 2>&1 | tee test_output.log
+      # ----------------------------------------------------------------------
+
+      - name: Check if anything failed
+        id: check
+        run: |
+          if grep -qiE "fail|error" test_output.log; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install aider
+        if: steps.check.outputs.failed == 'true'
+        run: pip install aider-chat
+
+      - name: Auto-fix failing tests
+        if: steps.check.outputs.failed == 'true'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.AI_API_KEY }}   # your OpenRouter key
+        run: |
+          TAIL=$(tail -c 6000 test_output.log)         # cap context to control cost
+          aider \
+            --yes-always \
+            --no-check-update \
+            --map-tokens 0 \
+            --model openrouter/deepseek/deepseek-chat-v3.1:free \
+            --auto-commits \
+            --commit-prompt "fix: automated nightly fix for failing tests" \
+            --message "Only fix what is causing these failing tests. Do not refactor unrelated code. Test output:\n${TAIL}"
+
+      - name: Push fix
+        if: steps.check.outputs.failed == 'true'
+        run: git push origin HEAD:main
