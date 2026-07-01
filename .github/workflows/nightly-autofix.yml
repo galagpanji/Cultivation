@@ -2,7 +2,7 @@ name: Nightly Auto-Fix
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # 3 AM UTC daily — change to taste
+    - cron: '*/15 * * * *'   # 3 AM UTC daily — change to taste
   workflow_dispatch: {}    # lets you trigger it manually from the Actions tab
 
 permissions:
